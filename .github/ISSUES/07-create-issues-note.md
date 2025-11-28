@@ -1,0 +1,1 @@
+Note: Issues will be created automatically via MCP tools.
