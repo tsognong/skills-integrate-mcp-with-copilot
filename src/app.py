@@ -3,6 +3,9 @@ High School Management System API
 
 A super simple FastAPI application that allows students to view and sign up
 for extracurricular activities at Mergington High School.
+
+Security note: Passwords are hashed using Werkzeug. When adding database layer,
+use parameterized queries or ORM like SQLAlchemy to prevent SQL injection.
 """
 
 from fastapi import FastAPI, HTTPException
@@ -10,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 import os
 from pathlib import Path
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = FastAPI(title="Mergington High School API",
               description="API for viewing and signing up for extracurricular activities")
@@ -78,9 +82,24 @@ activities = {
 }
 
 
+# In-memory user database with hashed passwords
+users = {
+    "teacher@mergington.edu": generate_password_hash("securepassword"),
+    "admin@mergington.edu": generate_password_hash("adminpass"),
+}
+
+
 @app.get("/")
 def root():
     return RedirectResponse(url="/static/index.html")
+
+
+@app.post("/login")
+def login(email: str, password: str):
+    """Authenticate a user"""
+    if email in users and check_password_hash(users[email], password):
+        return {"message": "Login successful"}
+    raise HTTPException(status_code=401, detail="Invalid credentials")
 
 
 @app.get("/activities")
